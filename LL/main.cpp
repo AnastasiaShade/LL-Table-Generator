@@ -1,39 +1,37 @@
 #include "stdafx.h"
+#include <boost/algorithm/string/regex.hpp>
+#include <boost/regex.hpp>
+#include <fstream>
+#include <iostream>
 #include <map>
 #include <string>
 #include <vector>
-#include <fstream>
-#include <iostream>
-#include <boost/regex.hpp>
-#include <boost/algorithm/string/regex.hpp>
 
 using namespace std;
 
 struct Rule
 {
-	string leftPart = "";
+	string leftPart;
 	vector<vector<string>> rightParts;
 };
 
-void ParseLine(vector<string> & arr, const string & line)
+void ParseLine(vector<string>& arr, const string& line)
 {
 	boost::algorithm::split_regex(arr, line, boost::regex("->|( +)"));
 }
 
-size_t FindRule(const vector<Rule> & grammar, const string & leftGrammarPart)
+/* return index of first rule with leftGrammarPart or -1 if rule not exist */
+long GetRuleIndex(const vector<Rule>& grammar, const string& leftGrammarPart)
 {
-	for (size_t i = 0; i < grammar.size(); ++i)
-	{
-		if (grammar[i].leftPart == leftGrammarPart)
-		{
-			return i;
-		}
-	}
+	auto comparator = [&leftGrammarPart](const Rule& rule) {
+		return rule.leftPart == leftGrammarPart;
+	};
+	auto result = std::find_if(grammar.begin(), grammar.end(), comparator);
 
-	return -1;
+	return (result != grammar.end()) ? std::distance(grammar.begin(), result) : -1;
 }
 
-void ReadAndParseGrammar(vector<Rule> & grammar, const string & inputFile)
+void ReadAndParseGrammar(vector<Rule>& grammar, const string& inputFile)
 {
 	ifstream input(inputFile);
 	string line, leftGrammarPart;
@@ -43,8 +41,8 @@ void ReadAndParseGrammar(vector<Rule> & grammar, const string & inputFile)
 		ParseLine(parsedLine, line);
 		leftGrammarPart = parsedLine[0];
 		parsedLine.erase(parsedLine.begin());
-		size_t pos = FindRule(grammar, leftGrammarPart);
-		
+		size_t pos = GetRuleIndex(grammar, leftGrammarPart);
+
 		if (pos == -1)
 		{
 			Rule newRule;
@@ -59,7 +57,9 @@ void ReadAndParseGrammar(vector<Rule> & grammar, const string & inputFile)
 	}
 }
 
-bool AreEquals(const vector<vector<string>> & items, size_t currPos)
+size_t example;
+
+bool AreEquals(const vector<vector<string>>& items, size_t currPos)
 {
 	string item = items[0][currPos];
 	for (size_t i = 1; i < items.size(); ++i)
@@ -73,7 +73,7 @@ bool AreEquals(const vector<vector<string>> & items, size_t currPos)
 	return true;
 }
 
-void ConvertToLL(vector<Rule> & grammar)
+void ConvertToLL(vector<Rule>& grammar)
 {
 	for (Rule rule : grammar)
 	{
@@ -86,8 +86,8 @@ void ConvertToLL(vector<Rule> & grammar)
 			tmp.erase(tmp.begin());
 			vector<vector<string>> equals;
 			equals.push_back(curr);
-			
-			for (size_t j = 0; j < tmp.size(); )
+
+			for (size_t j = 0; j < tmp.size();)
 			{
 				if (curr[0] == tmp[j][0])
 				{
@@ -100,33 +100,64 @@ void ConvertToLL(vector<Rule> & grammar)
 				}
 			}
 
-
-			//if (equals.size() > 1)
-			//SetNewRule()
-			Rule newRule;
-			string leftPart = rule.leftPart;
-			leftPart.insert(leftPart.size() - 2, to_string(counter));
-			newRule.leftPart = leftPart;
-
-
-			//GetMinSize()
-			size_t minSize = equals[0].size();
-			for (auto item : equals)
+			if (equals.size() > 1)
 			{
-				if (item.size() > minSize)
+				string newleftPart = rule.leftPart;
+				newleftPart.insert(newleftPart.size() - 2, to_string(counter));
+
+				size_t minSize = equals[0].size();
+				for (auto item : equals)
 				{
-					minSize = item.size();
+					if (item.size() < minSize)
+					{
+						minSize = item.size();
+					}
+				}
+
+				size_t currPos = 0;
+				vector<string> equalRightPart;
+				vector<vector<string>> differentRightParts;
+
+				while (currPos < minSize)
+				{
+					if (AreEquals(equals, currPos))
+					{
+						equalRightPart.push_back(curr.at(currPos));
+						++currPos;
+					}
+					else
+					{
+						break;
+					}
+				}
+
+				for (auto equal : equals)
+				{
+					if (equal.size() == currPos)
+					{
+						differentRightParts.emplace_back(vector<string>(1, ""));
+					}
+					if (equal.size() > currPos)
+					{
+						vector<string> tmp;
+						for (size_t i = currPos; i < equal.size(); ++i)
+						{
+							tmp.emplace_back(equal.at(i));
+						}
+						differentRightParts.push_back(tmp);
+					}
+				}
+
+				rule.rightParts = vector<vector<string>>(1, equalRightPart);
+
+				Rule tmpRule;
+				for (auto rightPart : differentRightParts)
+				{
+					tmpRule.leftPart = newleftPart;
+					tmpRule.rightParts = vector<vector<string>>(1, rightPart);
+					grammar.emplace_back(tmpRule);
 				}
 			}
-
-
-			size_t currPos = 1;
-			while (AreEquals(equals, currPos))
-			{
-				++currPos;
-			}
-
-
 
 			++counter;
 		}
@@ -161,6 +192,5 @@ int main()
 
 	map<string, vector<string>> mainTable;
 
-    return 0;
+	return 0;
 }
-
