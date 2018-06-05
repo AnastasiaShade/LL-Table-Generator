@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Grammar.h"
+#include "Table.h"
 
 using namespace std;
 
@@ -41,6 +42,30 @@ int main()
 
 	PrintGrammar(grammar.GetGrammar());
 
+	CTable table;
+
+	/* initialization */
+	for (const auto& rule : grammar.GetGrammar())
+	{
+		Rule::RightParts rightParts = rule.rightParts;
+
+		for (const auto& part : rightParts)
+		{
+			// тут мы имеем те же данные, которые поучили б считав строку
+			TableRow row;
+			row.referencingSet = part.referencingSet;
+
+			//если это последняя часть,то ставим ошибку
+			if (&part == &rightParts.back())
+			{
+				row.isError = true;
+			}
+
+			//конст ссылку на items должны запихнуть в доп структуру
+
+			table.Add(row);
+		}
+	}
 	return 0;
 }
 

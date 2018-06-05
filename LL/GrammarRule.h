@@ -1,10 +1,13 @@
 #pragma once
-#include <string>
-#include <vector>
+
+struct RightPart
+{
+	std::vector<std::string> items;
+	std::unordered_set<std::string> referencingSet;
+};
 
 struct Rule
 {
-	using RightPart = std::vector<std::string>;
 	using RightParts = std::vector<RightPart>;
 
 	std::string leftPart;
