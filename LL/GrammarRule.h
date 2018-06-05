@@ -1,13 +1,16 @@
 #pragma once
 
-struct RightPart
-{
-	std::vector<std::string> items;
-	std::unordered_set<std::string> referencingSet;
-};
-
 struct Rule
 {
+	struct RightPart
+	{
+		using Items = std::vector<std::string>;
+		using GuidesSet = std::unordered_set<std::string>;
+
+		Items items;
+		GuidesSet guides; // направл€ющие (направл€ющее множество)
+	};
+
 	using RightParts = std::vector<RightPart>;
 
 	std::string leftPart;

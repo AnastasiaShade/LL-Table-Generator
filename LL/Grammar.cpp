@@ -4,7 +4,8 @@
 namespace
 {
 const std::string LINE_SPLIT_PATTERN = "->|( +)";
-}
+const std::string GUIDE_SET_SYMBOL = "/";
+} // namespace
 
 CGrammar::CGrammar()
 	: m_lineSplitRegex(boost::regex(LINE_SPLIT_PATTERN))
@@ -23,24 +24,51 @@ void CGrammar::ReadAndParseGrammar(std::istream& input)
 		leftGrammarPart = parsedLine.at(0);
 		parsedLine.erase(parsedLine.begin());
 
+		Rule::RightPart::Items items;
+		Rule::RightPart::GuidesSet guides;
+
+		bool isItems = true;
+		for (const auto& parsedElement : parsedLine)
+		{
+			if (parsedElement == GUIDE_SET_SYMBOL)
+			{
+				isItems = false;
+				continue;
+			}
+
+			if (isItems)
+			{
+				items.emplace_back(parsedElement);
+			}
+			else
+			{
+				guides.emplace(parsedElement);
+			}
+		}
+
+		Rule::RightPart rightPart;
+		rightPart.items = items;
+		rightPart.guides = guides;
+
 		size_t pos = GetRuleIndex(leftGrammarPart);
 		if (pos == -1)
 		{
 			Rule newRule;
 			newRule.leftPart = leftGrammarPart;
-			newRule.rightParts.push_back(parsedLine);
+			newRule.rightParts = Rule::RightParts(1, rightPart);
+
 			m_grammar.push_back(newRule);
 		}
 		else
 		{
-			m_grammar.at(pos).rightParts.push_back(parsedLine);
+			m_grammar.at(pos).rightParts.emplace_back(rightPart);
 		}
 	}
 }
 
 void CGrammar::ConvertToLL()
 {
-	for (Rule& rule : m_grammar)
+	/*for (Rule& rule : m_grammar)
 	{
 		Rule::RightParts tmpRightParts = rule.rightParts;
 		unsigned counter = 1;
@@ -72,7 +100,7 @@ void CGrammar::ConvertToLL()
 
 			++counter;
 		}
-	}
+	}*/
 }
 
 CGrammar::Grammar CGrammar::GetGrammar() const
@@ -98,15 +126,16 @@ long CGrammar::GetRuleIndex(const std::string& leftGrammarPart) const
 
 bool CGrammar::AreEquals(Rule::RightParts rightParts, size_t currPos) const
 {
-	if (currPos >= rightParts.at(0).size())
+	/*if (currPos >= rightParts.at(0).size())
 	{
 		return false;
 	}
 
 	std::string item = rightParts.at(0).at(currPos);
+	*/
 	bool result = true;
 
-	for (size_t i = 1; i < rightParts.size(); ++i)
+	/*for (size_t i = 1; i < rightParts.size(); ++i)
 	{
 		if (currPos >= rightParts.at(i).size())
 		{
@@ -118,14 +147,14 @@ bool CGrammar::AreEquals(Rule::RightParts rightParts, size_t currPos) const
 			result = false;
 			break;
 		}
-	}
+	}*/
 
 	return result;
 }
 
 void CGrammar::ConvertRule(Rule& rule, const Rule::RightParts& equals, unsigned counter)
 {
-	Rule::RightPart equalRightPart = GetEqualRightPart(equals);
+	/*Rule::RightPart equalRightPart = GetEqualRightPart(equals);
 	Rule::RightParts differentRightParts = GetDifferentRingtParts(equals, equalRightPart.size());
 
 	Rule newRule;
@@ -140,13 +169,13 @@ void CGrammar::ConvertRule(Rule& rule, const Rule::RightParts& equals, unsigned 
 	tmp.push_back(newRule.leftPart);
 	rule.rightParts = Rule::RightParts(1, tmp);
 
-	m_grammar.emplace_back(newRule);
+	m_grammar.emplace_back(newRule);*/
 }
 
 Rule::RightPart CGrammar::GetEqualRightPart(const Rule::RightParts& equals) const
 {
 	Rule::RightPart result;
-	size_t currPos = 0;
+	/*size_t currPos = 0;
 
 	while (currPos < GetMinSize(equals))
 	{
@@ -159,7 +188,7 @@ Rule::RightPart CGrammar::GetEqualRightPart(const Rule::RightParts& equals) cons
 		{
 			break;
 		}
-	}
+	}*/
 
 	return result;
 }
@@ -168,7 +197,7 @@ Rule::RightParts CGrammar::GetDifferentRingtParts(const Rule::RightParts& equals
 {
 	Rule::RightParts differentRightParts;
 
-	for (auto equal : equals)
+	/*for (auto equal : equals)
 	{
 		if (equal.size() == equalsLength)
 		{
@@ -183,14 +212,14 @@ Rule::RightParts CGrammar::GetDifferentRingtParts(const Rule::RightParts& equals
 			}
 			differentRightParts.push_back(tmpRightPart);
 		}
-	}
+	}*/
 
 	return differentRightParts;
 }
 
 size_t CGrammar::GetMinSize(const Rule::RightParts& equals) const
 {
-	size_t minSize = equals.at(0).size();
+	/*size_t minSize = equals.at(0).size();
 	size_t itemSize = 0;
 
 	for (const auto& item : equals)
@@ -201,5 +230,6 @@ size_t CGrammar::GetMinSize(const Rule::RightParts& equals) const
 			minSize = itemSize;
 		}
 	}
-	return minSize;
+	return minSize;*/
+	return 0;
 }
