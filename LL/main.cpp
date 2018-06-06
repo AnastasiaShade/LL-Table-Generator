@@ -57,6 +57,10 @@ int main()
 				reference->second.emplace_back(currentRowNumber);
 			}
 
+			if (part.items.empty())
+			{
+				guidesSet.emplace("<>", part.guides);
+			}
 			auto guide = guidesSet.find(rule.leftPart);
 			if (guide == guidesSet.end())
 			{
@@ -88,7 +92,16 @@ int main()
 	{
 		Rule::RightPart::Items items;
 
-		table.Get(nextUnresolvedIndex).next = currentRowNumber; // берем из table строку с индексом текущего m_unresolvedNextIds и там в next ставим m_currentTableRowId
+		table.Get(nextUnresolvedIndex).next = currentRowNumber;
+
+		if (unresolvedNextId.empty())
+		{
+			++currentRowNumber;
+			TableRow row;
+			row.referencingSet = guidesSet.at("<>");
+			row.isError = true;
+			table.Add(row);
+		}
 
 		for (const auto& item : unresolvedNextId)
 		{
@@ -142,8 +155,8 @@ int main()
 
 			table.Add(row);
 
-			//cout << "\n\n";
-			//PrintTable(table);
+			cout << "\n\n";
+			PrintTable(table);
 		}
 
 		++nextUnresolvedIndex;
