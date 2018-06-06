@@ -5,6 +5,7 @@
 using namespace std;
 
 void PrintGrammar(const CGrammar::Grammar& grammar);
+void PrintTable(CTable& table);
 bool IsTerminal(const std::string& symbol);
 
 int main()
@@ -79,6 +80,9 @@ int main()
 		}
 	}
 
+	cout << "\n\n\nAfter initialisation\n";
+	PrintTable(table);
+
 	size_t nextUnresolvedIndex = 0;
 	for (const auto& unresolvedNextId : unresolvedNextIds)
 	{
@@ -140,6 +144,9 @@ int main()
 		}
 	}
 
+	cout << "\n\n\nAfter fill\n";
+	PrintTable(table);
+
 	return EXIT_SUCCESS;
 }
 
@@ -149,7 +156,7 @@ bool IsTerminal(const std::string& symbol)
 	{
 		return false;
 	}
-	return symbol.front() == '<' && symbol.back() == '>';
+	return symbol.front() != '<' && symbol.back() != '>';
 }
 
 void PrintGrammar(const CGrammar::Grammar& grammar)
@@ -171,5 +178,28 @@ void PrintGrammar(const CGrammar::Grammar& grammar)
 			cout << endl;
 		}
 		cout << "------------------------" << endl;
+	}
+}
+
+void PrintTable(CTable& table)
+{
+	for (size_t i = 0; i < table.Size(); ++i)
+	{
+		TableRow currentRow = table.Get(i);
+		string set = "{ ";
+		for (const auto& reference : currentRow.referencingSet)
+		{
+			set.append(reference).append(", ");
+		}
+		set.append("}");
+
+		cout << setw(5) << left << (" " + to_string(i))
+			 << setw(20) << set
+			 << setw(5) << (currentRow.next == boost::none ? " -" : to_string(currentRow.next.get()))
+			 << setw(5) << (currentRow.isShift ? " +" : " -")
+			 << setw(5) << (currentRow.idAtStack == boost::none ? " -" : to_string(currentRow.idAtStack.get()))
+			 << setw(5) << (currentRow.isError ? " +" : " -")
+			 << setw(5) << (currentRow.isEnd ? " +" : " -")
+			 << endl;
 	}
 }
