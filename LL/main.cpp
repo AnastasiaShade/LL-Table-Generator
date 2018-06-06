@@ -92,6 +92,7 @@ int main()
 
 		for (const auto& item : unresolvedNextId)
 		{
+			++currentRowNumber;
 			TableRow row;
 
 			if (IsTerminal(item))
@@ -140,8 +141,12 @@ int main()
 			row.isError = true;
 
 			table.Add(row);
-			++currentRowNumber;
+
+			//cout << "\n\n";
+			//PrintTable(table);
 		}
+
+		++nextUnresolvedIndex;
 	}
 
 	cout << "\n\n\nAfter fill\n";
