@@ -25,7 +25,7 @@ void CGrammar::ReadAndParseGrammar(std::istream& input)
 		parsedLine.erase(parsedLine.begin());
 
 		Rule::RightPart::Items items;
-		Rule::RightPart::GuidesSet guides;
+		Rule::RightPart::Guides guides;
 
 		bool isItems = true;
 		for (const auto& parsedElement : parsedLine)

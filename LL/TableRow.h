@@ -6,7 +6,7 @@ struct TableRow
 	explicit TableRow()
 		: next(boost::none)
 		, idAtStack(boost::none)
-		, isError(false)
+		, isError(true)
 		, isEnd(false)
 		, isShift(false)
 	{

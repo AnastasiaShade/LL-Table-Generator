@@ -9,5 +9,5 @@ public:
 	TableRow& Get(size_t);
 
 private:
-	std::vector<TableRow> m_table;
+	std::vector<TableRow> m_rows;
 };

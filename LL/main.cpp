@@ -1,12 +1,12 @@
 #include "stdafx.h"
 #include "Grammar.h"
 #include "Table.h"
+#include "TableGenerator.h"
 
 using namespace std;
 
 void PrintGrammar(const CGrammar::Grammar& grammar);
 void PrintTable(CTable& table);
-bool IsTerminal(const std::string& symbol);
 
 int main()
 {
@@ -22,159 +22,12 @@ int main()
 	//grammar.ConvertToLL();
 	PrintGrammar(grammar.GetGrammar());
 
-	CTable table;
-	std::vector<Rule::RightPart::Items> unresolvedNextIds;
-	std::map<std::string, std::vector<size_t>> tableReferences;
-	std::map<std::string, std::unordered_set<std::string>> guidesSet;
+	CTableGenerator tableGenerator;
+	tableGenerator.Generate(grammar.GetGrammar());
 
-	/* initialization */
-	size_t currentRowNumber = 0;
-	for (const auto& rule : grammar.GetGrammar())
-	{
-		Rule::RightParts rightParts = rule.rightParts;
-
-		for (const auto& part : rightParts)
-		{
-			TableRow row;
-			row.referencingSet = part.guides;
-			//если это последняя часть,то ставим ошибку
-			if (&part == &rightParts.back())
-			{
-				row.isError = true;
-			}
-
-			////////////////////
-			//конст ссылку на items должны запихнуть в доп структуру
-			unresolvedNextIds.emplace_back(part.items);
-
-			auto reference = tableReferences.find(rule.leftPart);
-			if (reference == tableReferences.end())
-			{
-				tableReferences.emplace(rule.leftPart, std::vector<size_t>(1, currentRowNumber));
-			}
-			else
-			{
-				reference->second.emplace_back(currentRowNumber);
-			}
-
-			if (part.items.empty())
-			{
-				guidesSet.emplace("<>", part.guides);
-			}
-			auto guide = guidesSet.find(rule.leftPart);
-			if (guide == guidesSet.end())
-			{
-				guidesSet.emplace(rule.leftPart, part.guides);
-			}
-			else
-			{
-				for (auto tmp : part.guides)
-				{
-					if (guide->second.find(tmp) == guide->second.end())
-					{
-						guide->second.emplace(tmp);
-					}
-				}
-			}
-
-			/////////////////////
-
-			table.Add(row);
-			++currentRowNumber;
-		}
-	}
-
-	cout << "\n\n\nAfter initialisation\n";
-	PrintTable(table);
-
-	size_t nextUnresolvedIndex = 0;
-	for (const auto& unresolvedNextId : unresolvedNextIds)
-	{
-		Rule::RightPart::Items items;
-
-		table.Get(nextUnresolvedIndex).next = currentRowNumber;
-
-		if (unresolvedNextId.empty())
-		{
-			++currentRowNumber;
-			TableRow row;
-			row.referencingSet = guidesSet.at("<>");
-			row.isError = true;
-			table.Add(row);
-		}
-
-		for (const auto& item : unresolvedNextId)
-		{
-			++currentRowNumber;
-			TableRow row;
-
-			if (IsTerminal(item))
-			{
-				/* у нас лексер еще не прикручен */
-				/*
-				Token symbolValue;
-				if (!TokenExtensions::CreateFromString(symbolValueString, symbolValue))
-				{
-					throw std::runtime_error("Cannot create token from string: " + symbolValueString);
-				}
-				*/
-
-				row.referencingSet = Rule::RightPart::GuidesSet({ item });
-
-				if (&item != &unresolvedNextId.back())
-				{
-					row.next = currentRowNumber;
-				}
-
-				if (item == "#")
-				{
-
-					row.isEnd = true;
-				}
-				else
-				{
-					row.isShift = true;
-				}
-			}
-			else
-			{
-				row.referencingSet = guidesSet.at(item);
-
-				if (item != "")
-				{
-					row.next = tableReferences.at(item).front(); //наверно так
-				}
-
-				if ((&item != &unresolvedNextId.back()))
-				{
-					row.idAtStack = currentRowNumber;
-				}
-			}
-
-			row.isError = true;
-
-			table.Add(row);
-
-			cout << "\n\n";
-			PrintTable(table);
-		}
-
-		++nextUnresolvedIndex;
-	}
-
-	cout << "\n\n\nAfter fill\n";
-	PrintTable(table);
+	PrintTable(tableGenerator.Get());
 
 	return EXIT_SUCCESS;
-}
-
-bool IsTerminal(const std::string& symbol)
-{
-	if (symbol.empty())
-	{
-		return false;
-	}
-	return symbol.front() != '<' && symbol.back() != '>';
 }
 
 void PrintGrammar(const CGrammar::Grammar& grammar)
@@ -201,6 +54,17 @@ void PrintGrammar(const CGrammar::Grammar& grammar)
 
 void PrintTable(CTable& table)
 {
+	cout << setw(4) << left << "id" << "| "
+		 << setw(30) << "guides set" << "| "
+		 << setw(7) << "next" << "| "
+		 << setw(9) << "isShift" << "| "
+		 << setw(11) << "idAtStack" << "| "
+		 << setw(9) << "isError" << "| "
+		 << setw(7) << "isEnd" << "| "
+		 << endl;
+
+	cout << string(90, '-') << endl;
+
 	for (size_t i = 0; i < table.Size(); ++i)
 	{
 		TableRow currentRow = table.Get(i);
@@ -211,13 +75,13 @@ void PrintTable(CTable& table)
 		}
 		set.append("}");
 
-		cout << setw(5) << left << (" " + to_string(i))
-			 << setw(20) << set
-			 << setw(5) << (currentRow.next == boost::none ? " -" : to_string(currentRow.next.get()))
-			 << setw(5) << (currentRow.isShift ? " +" : " -")
-			 << setw(5) << (currentRow.idAtStack == boost::none ? " -" : to_string(currentRow.idAtStack.get()))
-			 << setw(5) << (currentRow.isError ? " +" : " -")
-			 << setw(5) << (currentRow.isEnd ? " +" : " -")
+		cout << setw(4) << left << (" " + to_string(i)) << "| "
+			 << setw(30) << set << "| "
+			 << setw(7) << (currentRow.next == boost::none ? "-" : to_string(currentRow.next.get())) << "| "
+			 << setw(9) << (currentRow.isShift ? "+" : "-") << "| "
+			 << setw(11) << (currentRow.idAtStack == boost::none ? "-" : to_string(currentRow.idAtStack.get())) << "| "
+			 << setw(9) << (currentRow.isError ? "+" : "-") << "| "
+			 << setw(7) << (currentRow.isEnd ? "+" : "-") << "| "
 			 << endl;
 	}
 }
