@@ -21,7 +21,7 @@ private:
 
 	CTable m_table;
 
-	std::vector<Rule::RightPart::Items> m_unresolvedNextIds;
+	std::vector<std::pair<std::string, Rule::RightPart::Items>> m_unresolvedNextIds;
 	std::map<std::string, std::vector<size_t>> m_tableReferences;
 	std::map<std::string, Rule::RightPart::Guides> m_guidesSet;
 };

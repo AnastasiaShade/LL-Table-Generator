@@ -35,7 +35,7 @@ void CTableGenerator::Initialize(const CGrammar::Grammar& grammar)
 				row.isError = false;
 			}
 
-			m_unresolvedNextIds.emplace_back(part.items);
+			m_unresolvedNextIds.emplace_back(rule.leftPart, part.items);
 			AddReferences(rule.leftPart, currentRowNumber);
 			AddGuides(rule.leftPart, part.items, part.guides);
 
@@ -54,26 +54,26 @@ void CTableGenerator::Fill()
 	{
 		m_table.Get(nextUnresolvedIndex).next = currentRowNumber;
 
-		if (unresolvedNextId.empty())
+		if (unresolvedNextId.second.empty())
 		{
 			++currentRowNumber;
 			TableRow row;
-			row.referencingSet = m_guidesSet.at(EMPTY_SYMBOL);
+			row.referencingSet = m_guidesSet.at(EMPTY_SYMBOL + unresolvedNextId.first);
 			m_table.Add(row);
 		}
 
-		for (const auto& item : unresolvedNextId)
+		for (const auto& item : unresolvedNextId.second)
 		{
 			++currentRowNumber;
 			TableRow row;
 
 			if (IsTerminal(item))
 			{
-				ProcessTerminal(row, item, unresolvedNextId, currentRowNumber);
+				ProcessTerminal(row, item, unresolvedNextId.second, currentRowNumber);
 			}
 			else
 			{
-				ProcessNonTerminal(row, item, unresolvedNextId, currentRowNumber);
+				ProcessNonTerminal(row, item, unresolvedNextId.second, currentRowNumber);
 			}
 
 			m_table.Add(row);
@@ -116,10 +116,7 @@ void CTableGenerator::ProcessNonTerminal(TableRow& row, const std::string& item,
 {
 	row.referencingSet = m_guidesSet.at(item);
 
-	if (item != "")
-	{
-		row.next = m_tableReferences.at(item).front();
-	}
+	row.next = m_tableReferences.at(item).front();
 
 	if (&item != &items.back())
 	{
@@ -142,24 +139,26 @@ void CTableGenerator::AddReferences(const std::string& leftPart, size_t currentR
 
 void CTableGenerator::AddGuides(const std::string& leftPart, const Rule::RightPart::Items& items, const Rule::RightPart::Guides& guides)
 {
-	if (items.empty())
-	{
-		m_guidesSet.emplace(EMPTY_SYMBOL, guides);
-	}
-
-	auto guide = m_guidesSet.find(leftPart);
-	if (guide == m_guidesSet.end())
+	auto guidesPos = m_guidesSet.find(leftPart);
+	if (guidesPos == m_guidesSet.end())
 	{
 		m_guidesSet.emplace(leftPart, guides);
 	}
 	else
 	{
-		for (auto tmp : guides)
+		guidesPos->second.insert(guides.cbegin(), guides.cend());
+	}
+
+	if (items.empty())
+	{
+		auto guidesPos1 = m_guidesSet.find(EMPTY_SYMBOL + leftPart);
+		if (guidesPos1 == m_guidesSet.end())
 		{
-			if (guide->second.find(tmp) == guide->second.end())
-			{
-				guide->second.emplace(tmp);
-			}
+			m_guidesSet.emplace(EMPTY_SYMBOL + leftPart, guides);
+		}
+		else
+		{
+			guidesPos1->second.insert(guides.cbegin(), guides.cend());
 		}
 	}
 }

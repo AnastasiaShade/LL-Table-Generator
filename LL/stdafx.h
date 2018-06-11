@@ -12,6 +12,8 @@
 #include <iomanip>
 #include <iostream>
 #include <map>
+#include <sstream>
+#include <stack>
 #include <string>
 #include <unordered_set>
 #include <vector>
