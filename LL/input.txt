@@ -1,5 +1,7 @@
-<S>->while <E>
-<S>->while <E> do <S>
-<E>->id <A>
-<A>->
-<A>->+ <E> <A>
+<S>->a <A> <B> # / a
+<S>->b <B> <S> # / b
+<S>-># / #
+<A>->/ d f
+<A>->c <B> <S> / c
+<B>->d <B> / d
+<B>->f / f

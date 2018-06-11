@@ -15,3 +15,8 @@ TableRow& CTable::Get(size_t index)
 {
 	return m_rows.at(index);
 }
+
+TableRow CTable::Get(size_t index) const
+{
+	return m_rows.at(index);
+}

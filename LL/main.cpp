@@ -6,8 +6,8 @@
 using namespace std;
 
 void PrintGrammar(const CGrammar::Grammar& grammar);
-void PrintTable(CTable& table);
-void ParseString(const std::string& str, CTable& table);
+void PrintTable(const CTable& table);
+void ParseString(const std::string& str, const CTable& table);
 
 int main()
 {
@@ -45,12 +45,12 @@ void PrintGrammar(const CGrammar::Grammar& grammar)
 		cout << items.leftPart << ":" << endl;
 		for (const auto& part : items.rightParts)
 		{
-			for (string item : part.items)
+			for (const string& item : part.items)
 			{
 				cout << item << " ";
 			}
 			cout << "/ ";
-			for (string item : part.guides)
+			for (const string& item : part.guides)
 			{
 				cout << item << " ";
 			}
@@ -60,23 +60,15 @@ void PrintGrammar(const CGrammar::Grammar& grammar)
 	}
 }
 
-void PrintTable(CTable& table)
+void PrintTable(const CTable& table)
 {
-	cout << setw(4) << left << "id"
-		 << "| "
-		 << setw(30) << "guides set"
-		 << "| "
-		 << setw(7) << "next"
-		 << "| "
-		 << setw(9) << "isShift"
-		 << "| "
-		 << setw(11) << "idAtStack"
-		 << "| "
-		 << setw(9) << "isError"
-		 << "| "
-		 << setw(7) << "isEnd"
-		 << "| "
-		 << endl;
+	cout << setw(4) << left << "id" << "| "
+		 << setw(30) << "guides set" << "| "
+		 << setw(7) << "next" << "| "
+		 << setw(9) << "isShift" << "| "
+		 << setw(11) << "idAtStack" << "| "
+		 << setw(9) << "isError" << "| "
+		 << setw(7) << "isEnd" << "| " << endl;
 
 	cout << string(90, '-') << endl;
 
@@ -103,7 +95,7 @@ void PrintTable(CTable& table)
 	}
 }
 
-void ParseString(const std::string& str, CTable& table)
+void ParseString(const std::string& str, const CTable& table)
 {
 	stringstream strm(str);
 
@@ -113,19 +105,12 @@ void ParseString(const std::string& str, CTable& table)
 	bool isEnd = false;
 	stack<size_t> stack;
 
-	while ((!isError) && (!isEnd))
+	while (strm >> elem)
 	{
-		strm >> elem;
 		cout << "search for " << elem << endl;
 		TableRow& row = table.Get(index);
 
-		if (row.isEnd)
-		{
-			isEnd = true;
-			break;
-		}
-
-		while (!row.isShift)
+		do
 		{
 			row = table.Get(index);
 
@@ -133,7 +118,14 @@ void ParseString(const std::string& str, CTable& table)
 
 			if (row.isEnd)
 			{
-				isEnd = true;
+				if (stack.empty())
+				{
+					isEnd = true;
+				}
+				else
+				{
+					isError = true;
+				}
 				break;
 			}
 
@@ -150,37 +142,34 @@ void ParseString(const std::string& str, CTable& table)
 				}
 				else
 				{
-					if (!row.isError)
+					if (!stack.empty())
 					{
-						++index;
+						index = stack.top();
+						stack.pop();
 					}
 					else
 					{
-						if (stack.empty())
-						{
-							isError = true;
-							break;
-						}
-						else
-						{
-							index = stack.top();
-							stack.pop();
-						}
+						isError = true;
 					}
 				}
 			}
 			else
 			{
-				if (row.isError)
+				if (!row.isError)
+				{
+					++index;
+				}
+				else
 				{
 					isError = true;
 					break;
 				}
-				else
-				{
-					++index;
-				}
 			}
+		} while (!row.isShift);
+
+		if (isEnd || isError)
+		{
+			break;
 		}
 	}
 
