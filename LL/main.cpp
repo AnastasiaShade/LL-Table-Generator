@@ -148,6 +148,7 @@ void ParseString(const std::string& str, const CTable& table)
 					else
 					{
 						isError = true;
+						break;
 					}
 				}
 			}
@@ -173,6 +174,7 @@ void ParseString(const std::string& str, const CTable& table)
 					else
 					{
 						isError = true;
+						break;
 					}
 				}
 			}
@@ -184,15 +186,8 @@ void ParseString(const std::string& str, const CTable& table)
 				}
 				else
 				{
-					if (!stack.empty())
-					{
-						index = stack.top();
-						stack.pop();
-					}
-					else
-					{
-						isError = true;
-					}
+					isError = true;
+					break;
 				}
 			}
 		} while (!row.isShift);
