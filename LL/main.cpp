@@ -11,29 +11,35 @@ void ParseString(const std::string& str, const CTable& table);
 
 int main()
 {
-	string inputFile;
+	try
+	{
+		string inputFile;
 
-	cout << "Input file: ";
-	getline(cin, inputFile);
-	cout << endl;
+		cout << "Input file: ";
+		getline(cin, inputFile);
+		cout << endl;
 
-	std::ifstream input(inputFile);
-	CGrammar grammar;
-	grammar.ReadAndParseGrammar(input);
-	//grammar.ConvertToLL();
-	PrintGrammar(grammar.GetGrammar());
+		std::ifstream input(inputFile);
+		CGrammar grammar;
+		grammar.ReadAndParseGrammar(input);
+		PrintGrammar(grammar.GetGrammar());
 
-	CTableGenerator tableGenerator;
-	tableGenerator.Generate(grammar.GetGrammar());
+		CTableGenerator tableGenerator;
+		tableGenerator.Generate(grammar.GetGrammar());
 
-	CTable table = tableGenerator.Get();
-	PrintTable(table);
+		CTable table = tableGenerator.Get();
+		PrintTable(table);
 
-	string tmp;
-	cout << "\n\nEnter phrase for check\n";
-	getline(cin, tmp);
-	cout << endl;
-	ParseString(tmp, table);
+		string tmp;
+		cout << "\n\nEnter phrase for check\n";
+		getline(cin, tmp);
+		cout << endl;
+		ParseString(tmp, table);
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
 
 	return EXIT_SUCCESS;
 }
@@ -62,13 +68,20 @@ void PrintGrammar(const CGrammar::Grammar& grammar)
 
 void PrintTable(const CTable& table)
 {
-	cout << setw(4) << left << "id" << "| "
-		 << setw(30) << "guides set" << "| "
-		 << setw(7) << "next" << "| "
-		 << setw(9) << "isShift" << "| "
-		 << setw(11) << "idAtStack" << "| "
-		 << setw(9) << "isError" << "| "
-		 << setw(7) << "isEnd" << "| " << endl;
+	cout << setw(4) << left << "id"
+		 << "| "
+		 << setw(30) << "guides set"
+		 << "| "
+		 << setw(7) << "next"
+		 << "| "
+		 << setw(9) << "isShift"
+		 << "| "
+		 << setw(11) << "idAtStack"
+		 << "| "
+		 << setw(9) << "isError"
+		 << "| "
+		 << setw(7) << "isEnd"
+		 << "| " << endl;
 
 	cout << string(90, '-') << endl;
 
@@ -108,25 +121,35 @@ void ParseString(const std::string& str, const CTable& table)
 	while (strm >> elem)
 	{
 		cout << "search for " << elem << endl;
+
 		TableRow& row = table.Get(index);
 
 		do
 		{
 			row = table.Get(index);
 
-			cout << index << endl;
+			cout << index << " ";
 
 			if (row.isEnd)
 			{
-				if (stack.empty())
+				if (elem == "#")
 				{
 					isEnd = true;
+					break;
 				}
 				else
 				{
-					isError = true;
+					if (!stack.empty())
+					{
+						index = stack.top();
+						stack.pop();
+						continue;
+					}
+					else
+					{
+						isError = true;
+					}
 				}
-				break;
 			}
 
 			if (row.referencingSet.find(elem) != row.referencingSet.end())
@@ -161,11 +184,20 @@ void ParseString(const std::string& str, const CTable& table)
 				}
 				else
 				{
-					isError = true;
-					break;
+					if (!stack.empty())
+					{
+						index = stack.top();
+						stack.pop();
+					}
+					else
+					{
+						isError = true;
+					}
 				}
 			}
 		} while (!row.isShift);
+
+		cout << endl;
 
 		if (isEnd || isError)
 		{
